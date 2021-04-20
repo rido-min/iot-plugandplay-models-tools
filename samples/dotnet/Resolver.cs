@@ -1,7 +1,6 @@
 ﻿using Microsoft.Azure.DigitalTwins.Parser;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -14,13 +13,11 @@ namespace ResolutionSample
 
         public static string DtmiToPath(string dtmi) => $"/{dtmi.ToLowerInvariant().Replace(":", "/").Replace(";", "-")}.json";
 
-        public Resolver() : this(Array.Empty<string>()) { }
-        public Resolver(string repoUrl) : this(new string[] { repoUrl }) { }
-        public Resolver(string[] reposUrls)
+        public Resolver(params string[] reposUrls)
         {
             if (reposUrls.Length > 0)
             {
-                _repos = reposUrls.ToList();
+                _repos.AddRange(reposUrls);
             }
             else
             {
@@ -57,7 +54,7 @@ namespace ResolutionSample
             }
             if (string.IsNullOrEmpty(modelContent))
             {
-                throw new ApplicationException($"Dtmi '{dtmi}' not resolved in any of the configured repos.");
+                throw new ApplicationException($"Dtmi '{dtmi}' not found in any of the configured {_repos.Count} repos.");
             }
             return modelContent;
         }

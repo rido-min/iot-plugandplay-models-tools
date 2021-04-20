@@ -12,11 +12,11 @@ namespace ResolutionSample
     {
         static async Task Main(string[] args)
         {
-            var resolver = new Resolver(new string[] {
+            var resolver = new Resolver(
                 "https://devicemodels.azure.com",
                 "https://raw.githubusercontent.com/iotmodels/iot-plugandplay-models/rido/more",
                 "https://modelsrepositorytest.azureedge.net"
-            });
+            );
 
             ModelParser parser = new() { DtmiResolver =  resolver.ResolveCallback };
             var res = await parser.ParseAsync(new string[] { model });
@@ -35,7 +35,7 @@ namespace ResolutionSample
             {
                 ""@type"": ""Component"",
                 ""name"": ""d1"",
-                ""schema"": ""dtmi:azure:DeviceManagement:DeviceInformation;31""
+                ""schema"": ""dtmi:azure:DeviceManagement:DeviceInformation;3""
             }
             ]
         }";
