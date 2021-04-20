@@ -3,7 +3,6 @@
 
 using Microsoft.Azure.DigitalTwins.Parser;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,13 +18,10 @@ namespace ResolutionSample
                 "https://modelsrepositorytest.azureedge.net"
             });
 
-            ModelParser parser = new ModelParser
-            {
-                DtmiResolver =  resolver.ResolveCallback
-            };
-            var res = await parser.ParseAsync(new List<string> { model });
+            ModelParser parser = new() { DtmiResolver =  resolver.ResolveCallback };
+            var res = await parser.ParseAsync(new string[] { model });
 
-            Console.WriteLine("Parsing succeed ! \n\n");
+            Console.WriteLine("Parsing succeed ! DTMIs found: \n\n");
             res.ToList().ForEach(k => Console.WriteLine(k.Key));
         }
 
@@ -39,7 +35,7 @@ namespace ResolutionSample
             {
                 ""@type"": ""Component"",
                 ""name"": ""d1"",
-                ""schema"": ""dtmi:azure:DeviceManagement:DeviceInformation;3""
+                ""schema"": ""dtmi:azure:DeviceManagement:DeviceInformation;31""
             }
             ]
         }";

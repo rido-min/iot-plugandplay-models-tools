@@ -10,15 +10,12 @@ namespace ResolutionSample
     class Resolver
     {
         readonly List<string> _repos = new();
-
         readonly HttpClient _httpClient;
 
         public static string DtmiToPath(string dtmi) => $"/{dtmi.ToLowerInvariant().Replace(":", "/").Replace(";", "-")}.json";
 
         public Resolver() : this(Array.Empty<string>()) { }
-
         public Resolver(string repoUrl) : this(new string[] { repoUrl }) { }
-
         public Resolver(string[] reposUrls)
         {
             if (reposUrls.Length > 0)
@@ -38,7 +35,7 @@ namespace ResolutionSample
 
             foreach (Dtmi dtmi in dtmis)
             {
-                string content = await this.ResolveAsync(dtmi.ToString());
+                string content = await ResolveAsync(dtmi.ToString());
                 result.Add(content);
             }
 
@@ -60,7 +57,7 @@ namespace ResolutionSample
             }
             if (string.IsNullOrEmpty(modelContent))
             {
-                throw new ApplicationException("Dtmi not resolved in any of the configured repos.");
+                throw new ApplicationException($"Dtmi '{dtmi}' not resolved in any of the configured repos.");
             }
             return modelContent;
         }
