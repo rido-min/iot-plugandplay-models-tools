@@ -4,6 +4,7 @@
 using Microsoft.Azure.DigitalTwins.Parser;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,34 +13,49 @@ namespace ResolutionSample
 {
     class Program
     {
-        const string _repositoryEndpoint = "https://devicemodels.azure.com";
-        static readonly HttpClient _httpClient;
+        static Resolver _resolver;
 
         static Program()
         {
             // HttpClient is intended to be instantiated once per application, rather than per-use.
-            _httpClient = new HttpClient();
+            // "https://raw.githubusercontent.com/iotmodels/iot-plugandplay-models/rido/more"
+            _resolver = new Resolver();
         }
 
         static async Task Main(string[] args)
         {
             // Target DTMI for resolution.
-            string toParseDtmi = args.Length == 0 ? "dtmi:com:example:TemperatureController;1" : args[0];
+            //  string toParseDtmi = args.Length == 0 ? "dtmi:com:example:TemperatureController;1" : args[0];
 
             // Initiate first Resolve for the target dtmi to pass content to parser
-            string dtmiContent = await Resolve(toParseDtmi);
+            //  string dtmiContent = await Resolve(toParseDtmi);
 
-            if (!string.IsNullOrEmpty(dtmiContent))
+            var model = @"
             {
-                // Assign the callback
-                ModelParser parser = new ModelParser
+              ""@context"": ""dtmi:dtdl:context;2"",
+              ""@id"": ""dtmi:com:example:d1;1"",
+              ""@type"": ""Interface"",
+              ""displayName"": ""d1"",
+              ""contents"": [
                 {
-                    DtmiResolver = ResolveCallback
-                };
-                await parser.ParseAsync(new List<string> { dtmiContent });
-                Console.WriteLine("Parsing success!");
-            } 
-        }
+                  ""@type"": ""Component"",
+                  ""name"": ""d1"",
+                  ""schema"": ""dtmi:azure:DeviceManagement:DeviceInformation;1""
+                }
+              ]
+            }
+            ";
+
+            // Assign the callback
+            ModelParser parser = new ModelParser
+            {
+                DtmiResolver = ResolveCallback
+            };
+            var res = await parser.ParseAsync(new List<string> { model });
+            Console.WriteLine("Parsing success! \n\n");
+            res.ToList().ForEach(k => Console.WriteLine(k.Key));
+        } 
+        
 
         static async Task<IEnumerable<string>> ResolveCallback(IReadOnlyCollection<Dtmi> dtmis)
         {
@@ -48,52 +64,15 @@ namespace ResolutionSample
 
             foreach (Dtmi dtmi in dtmis)
             {
-                string content = await Resolve(dtmi.ToString());
+                string content = await _resolver.ResolveAsync(dtmi.ToString());
                 result.Add(content);
             }
 
             return result;
         }
 
-        static async Task<string> Resolve(string dtmi)
-        {
-            Console.WriteLine($"Attempting to resolve: {dtmi}");
+      
 
-            // Apply model repository convention
-            string dtmiPath = DtmiToPath(dtmi.ToString());
-            if (string.IsNullOrEmpty(dtmiPath)) 
-            {
-                Console.WriteLine($"Invalid DTMI: {dtmi}");
-                return await Task.FromResult<string>(string.Empty);
-            }
-            string fullyQualifiedPath = $"{_repositoryEndpoint}{dtmiPath}";
-            Console.WriteLine($"Fully qualified model path: {fullyQualifiedPath}");
-
-            // Make request
-            string modelContent = await _httpClient.GetStringAsync(fullyQualifiedPath);
-
-            // Output string model content to stdout
-            Console.WriteLine("Received content...");
-            Console.WriteLine(modelContent);
-
-            return modelContent;
-        }
-
-        static string DtmiToPath(string dtmi)
-        {
-            if (!IsValidDtmi(dtmi)) 
-            {
-                return null;
-            }
-            // dtmi:com:example:Thermostat;1 -> dtmi/com/example/thermostat-1.json
-            return $"/{dtmi.ToLowerInvariant().Replace(":", "/").Replace(";", "-")}.json";
-        }
-
-        static bool IsValidDtmi(string dtmi)
-        {
-            // Regex defined at https://github.com/Azure/digital-twin-model-identifier#validation-regular-expressions
-            Regex rx = new Regex(@"^dtmi:[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?(?::[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?)*;[1-9][0-9]{0,8}$");
-            return rx.IsMatch(dtmi);
-        }
+       
     }
 }
