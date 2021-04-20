@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Azure.DigitalTwins.Parser;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -11,6 +12,8 @@ namespace ResolutionSample
         readonly List<string> _repos = new();
 
         readonly HttpClient _httpClient;
+
+        public static string DtmiToPath(string dtmi) => $"/{dtmi.ToLowerInvariant().Replace(":", "/").Replace(";", "-")}.json";
 
         public Resolver() : this(Array.Empty<string>()) { }
 
@@ -29,15 +32,26 @@ namespace ResolutionSample
             _httpClient = new HttpClient();
         }
 
-        public async Task<string> ResolveAsync(string dtmi)
+        public async Task<IEnumerable<string>> ResolveCallback(IReadOnlyCollection<Dtmi> dtmis)
         {
-            string DtmiToPath(string dtmi) => $"/{dtmi.ToLowerInvariant().Replace(":", "/").Replace(";", "-")}.json";
+            List<string> result = new List<string>();
 
+            foreach (Dtmi dtmi in dtmis)
+            {
+                string content = await this.ResolveAsync(dtmi.ToString());
+                result.Add(content);
+            }
+
+            return result;
+        }
+
+        async Task<string> ResolveAsync(string dtmi)
+        {
             string modelContent = string.Empty;
             foreach (var repo in _repos)
             {
                 var fullyQualifiedPath = $"{repo}{DtmiToPath(dtmi)}";
-                Console.WriteLine($"LOG:  {dtmi} --> {fullyQualifiedPath}");
+                System.Diagnostics.Debug.WriteLine($"LOG:  {dtmi} --> {fullyQualifiedPath}");
                 modelContent = await FetchAsync(fullyQualifiedPath);
                 if (!string.IsNullOrEmpty(modelContent))
                 {
@@ -59,7 +73,7 @@ namespace ResolutionSample
             }
             catch (HttpRequestException hex) when (hex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"404: {url}");
+                System.Diagnostics.Debug.WriteLine($"404: {url}");
             }
             return null;
         }
