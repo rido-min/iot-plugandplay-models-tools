@@ -5,8 +5,6 @@ using Microsoft.Azure.DigitalTwins.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ResolutionSample
@@ -17,9 +15,9 @@ namespace ResolutionSample
 
         static Program()
         {
-            _resolver = new Resolver( new string[] {
-                "https://raw.githubusercontent.com/iotmodels/iot-plugandplay-models/rido/more",
+            _resolver = new Resolver(new string[] {
                 "https://devicemodels.azure.com",
+                "https://raw.githubusercontent.com/iotmodels/iot-plugandplay-models/rido/more",
                 "https://modelsrepositorytest.azureedge.net/"
             });
         }
@@ -42,7 +40,6 @@ namespace ResolutionSample
             }
             ";
 
-            
             ModelParser parser = new ModelParser
             {
                 DtmiResolver = ResolveCallback
@@ -51,8 +48,7 @@ namespace ResolutionSample
 
             Console.WriteLine("Parsing success! \n\n");
             res.ToList().ForEach(k => Console.WriteLine(k.Key));
-        } 
-        
+        }
 
         static async Task<IEnumerable<string>> ResolveCallback(IReadOnlyCollection<Dtmi> dtmis)
         {
@@ -66,9 +62,5 @@ namespace ResolutionSample
 
             return result;
         }
-
-      
-
-       
     }
 }
