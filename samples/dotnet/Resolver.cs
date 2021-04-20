@@ -20,6 +20,11 @@ namespace ResolutionSample
 
         }
 
+        public Resolver(string repoUrl) : this(new string[] { repoUrl })
+        {
+
+        }
+
         public Resolver(string[] reposUrls)
         {
             if (reposUrls.Length > 0)
@@ -35,19 +40,35 @@ namespace ResolutionSample
 
         public async Task<string> ResolveAsync(string dtmi)
         {
-            Console.WriteLine($"Attempting to resolve: {dtmi}");
-
-            string fullyQualifiedPath = $"{_repos[0]}{DtmiToPath(dtmi.ToString())}";
-            Console.WriteLine($"Fully qualified model path: {fullyQualifiedPath}");
-
-            // Make request
-            string modelContent = await _httpClient.GetStringAsync(fullyQualifiedPath);
-
-            // Output string model content to stdout
-            Console.WriteLine("Received content...");
-            // Console.WriteLine(modelContent);
-
+            string modelContent = string.Empty;
+            foreach (var repo in _repos)
+            {
+                var fullyQualifiedPath = $"{repo}{DtmiToPath(dtmi)}";
+                Console.WriteLine($"LOG:  {dtmi} --> {fullyQualifiedPath}");
+                modelContent = await FetchAsync(fullyQualifiedPath);
+                if (!string.IsNullOrEmpty(modelContent))
+                {
+                    return modelContent;
+                }
+            }
+            if (string.IsNullOrEmpty(modelContent))
+            {
+                throw new ApplicationException("Dtmi not resolved in any of the configured repos.");
+            }
             return modelContent;
+        }
+
+        async Task<string> FetchAsync(string url)
+        {
+            try
+            {
+                return await _httpClient.GetStringAsync(url);
+            }
+            catch (HttpRequestException hex) when (hex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                Console.WriteLine($"404: {url}");
+            }
+            return null;
         }
 
         string DtmiToPath(string dtmi)

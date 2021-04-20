@@ -17,19 +17,15 @@ namespace ResolutionSample
 
         static Program()
         {
-            // HttpClient is intended to be instantiated once per application, rather than per-use.
-            // "https://raw.githubusercontent.com/iotmodels/iot-plugandplay-models/rido/more"
-            _resolver = new Resolver();
+            _resolver = new Resolver( new string[] {
+                "https://raw.githubusercontent.com/iotmodels/iot-plugandplay-models/rido/more",
+                "https://devicemodels.azure.com",
+                "https://modelsrepositorytest.azureedge.net/"
+            });
         }
 
         static async Task Main(string[] args)
         {
-            // Target DTMI for resolution.
-            //  string toParseDtmi = args.Length == 0 ? "dtmi:com:example:TemperatureController;1" : args[0];
-
-            // Initiate first Resolve for the target dtmi to pass content to parser
-            //  string dtmiContent = await Resolve(toParseDtmi);
-
             var model = @"
             {
               ""@context"": ""dtmi:dtdl:context;2"",
@@ -40,18 +36,19 @@ namespace ResolutionSample
                 {
                   ""@type"": ""Component"",
                   ""name"": ""d1"",
-                  ""schema"": ""dtmi:azure:DeviceManagement:DeviceInformation;1""
+                  ""schema"": ""dtmi:azure:DeviceManagement:DeviceInformation;3""
                 }
               ]
             }
             ";
 
-            // Assign the callback
+            
             ModelParser parser = new ModelParser
             {
                 DtmiResolver = ResolveCallback
             };
             var res = await parser.ParseAsync(new List<string> { model });
+
             Console.WriteLine("Parsing success! \n\n");
             res.ToList().ForEach(k => Console.WriteLine(k.Key));
         } 
@@ -59,7 +56,6 @@ namespace ResolutionSample
 
         static async Task<IEnumerable<string>> ResolveCallback(IReadOnlyCollection<Dtmi> dtmis)
         {
-            Console.WriteLine("ResolveCallback invoked!");
             List<string> result = new List<string>();
 
             foreach (Dtmi dtmi in dtmis)
